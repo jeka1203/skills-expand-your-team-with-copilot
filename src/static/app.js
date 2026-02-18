@@ -571,6 +571,31 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="share-section">
+        <button class="share-toggle" data-activity="${name}">
+          🔗 Share Activity
+        </button>
+        <div class="share-buttons hidden" data-activity="${name}">
+          <button class="share-btn facebook" data-platform="facebook" data-activity="${name}" title="Share on Facebook">
+            <span class="share-icon">f</span>
+          </button>
+          <button class="share-btn twitter" data-platform="twitter" data-activity="${name}" title="Share on Twitter">
+            <span class="share-icon">𝕏</span>
+          </button>
+          <button class="share-btn linkedin" data-platform="linkedin" data-activity="${name}" title="Share on LinkedIn">
+            <span class="share-icon">in</span>
+          </button>
+          <button class="share-btn whatsapp" data-platform="whatsapp" data-activity="${name}" title="Share on WhatsApp">
+            <span class="share-icon">📱</span>
+          </button>
+          <button class="share-btn email" data-platform="email" data-activity="${name}" title="Share via Email">
+            <span class="share-icon">✉️</span>
+          </button>
+          <button class="share-btn copy" data-platform="copy" data-activity="${name}" title="Copy Link">
+            <span class="share-icon">📋</span>
+          </button>
+        </div>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -589,7 +614,92 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Add click handlers for share buttons
+    const shareToggle = activityCard.querySelector(".share-toggle");
+    const shareButtonsContainer = activityCard.querySelector(".share-buttons");
+    const shareButtons = activityCard.querySelectorAll(".share-btn");
+
+    shareToggle.addEventListener("click", () => {
+      shareButtonsContainer.classList.toggle("hidden");
+      shareToggle.classList.toggle("active");
+    });
+
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const platform = button.dataset.platform;
+        handleShare(name, details, platform);
+      });
+    });
+
     activitiesList.appendChild(activityCard);
+  }
+
+  // Function to generate shareable URL for an activity
+  function generateActivityUrl(activityName) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const params = new URLSearchParams({ activity: activityName });
+    return `${baseUrl}?${params.toString()}`;
+  }
+
+  // Function to handle sharing
+  function handleShare(activityName, activityDetails, platform) {
+    const url = generateActivityUrl(activityName);
+    const formattedSchedule = formatSchedule(activityDetails);
+    const text = `Check out this activity at Mergington High School: ${activityName}`;
+    const description = `${activityDetails.description}\nSchedule: ${formattedSchedule}`;
+    const fullText = `${text}\n\n${description}`;
+
+    switch (platform) {
+      case "facebook":
+        window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+          "_blank",
+          "width=600,height=400"
+        );
+        break;
+
+      case "twitter":
+        window.open(
+          `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+          "_blank",
+          "width=600,height=400"
+        );
+        break;
+
+      case "linkedin":
+        window.open(
+          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+          "_blank",
+          "width=600,height=400"
+        );
+        break;
+
+      case "whatsapp":
+        window.open(
+          `https://api.whatsapp.com/send?text=${encodeURIComponent(fullText + "\n" + url)}`,
+          "_blank"
+        );
+        break;
+
+      case "email":
+        const subject = `Activity at Mergington High School: ${activityName}`;
+        const body = `${description}\n\nLearn more and register: ${url}`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        break;
+
+      case "copy":
+        navigator.clipboard.writeText(url).then(() => {
+          showMessage("Link copied to clipboard!", "success");
+        }).catch((err) => {
+          console.error("Failed to copy:", err);
+          showMessage("Failed to copy link. Please try again.", "error");
+        });
+        break;
+
+      default:
+        console.error("Unknown share platform:", platform);
+    }
   }
 
   // Event listeners for search and filter
